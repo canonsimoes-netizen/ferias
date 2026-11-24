@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendário de trabalho</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1117;--sf:#1a1d27;--bd:#2a2e3d;--tx:#e6e8ef;--mu:#8b90a3;--bl:#4f8cff;--gr:#3ecf8e;--or:#ff9f43;--rd:#ff5d6c;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px;max-width:560px;margin-inline:auto}
+.nav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px}
+.nav h1{font-size:20px;margin:0}
+.nav button{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:10px;width:44px;height:44px;font-size:20px;cursor:pointer}
+.tb{display:flex;gap:8px;margin-bottom:14px}
+button.r{background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer}
+button.r.on{border-color:var(--bl);color:var(--bl)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.st{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.st b{display:block;font-size:26px}
+.st span{font-size:12px;color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dh{text-align:center;font-size:12px;color:var(--mu);padding:4px 0}
+.d{aspect-ratio:1;background:var(--sf);border:1px solid var(--bd);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;cursor:pointer;user-select:none;color:var(--tx);font-family:inherit;padding:0;overflow:hidden}
+.d.we{color:var(--mu);background:transparent;cursor:default}
+.d.fe{background:rgba(255,93,108,.15);border-color:var(--rd);color:var(--rd);cursor:default}
+.d.fr{background:rgba(62,207,142,.18);border-color:var(--gr);color:var(--gr);font-weight:600}
+.d small{font-size:9px;margin-top:2px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e{visibility:hidden}
+.box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-top:14px;font-size:14px;line-height:1.7}
+.box h2{font-size:13px;color:var(--mu);margin:0 0 6px;font-weight:600}
+.box .w{color:var(--mu)}
+details.box summary{cursor:pointer;font-size:13px;color:var(--mu);font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.box summary::-webkit-details-marker{display:none}
+details.box summary::after{content:"▾";font-size:14px}
+details.box[open] summary::after{content:"▴"}
+details.box #yl{margin-top:8px}
+.leg{margin:14px 0 8px;font-size:13px;color:var(--mu);line-height:1.6}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.ygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.mm{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:8px;cursor:pointer}
+.mm.cur{border-color:var(--bl)}
+.mm h3{font-size:13px;margin:0 0 6px}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mg div{font-size:10px;text-align:center;padding:2px 0;border-radius:4px;color:var(--tx)}
+.mg .h{color:var(--mu);font-size:9px}
+.mg .we{color:var(--mu)}
+.mg .fe{background:rgba(255,93,108,.25);color:var(--rd);font-weight:600}
+.mg .fr{background:rgba(62,207,142,.25);color:var(--gr);font-weight:600}
+html{overflow-x:hidden}
+.d{transition:transform .15s,border-color .2s,background .2s}
+.d:not(.we):not(.fe):hover{transform:translateY(-2px);border-color:var(--bl)}
+.d:active:not(.we):not(.fe){transform:scale(.94)}
+.d.pt{border:1px dashed var(--or);color:var(--or)}
+.d.pt small{color:var(--or)}
+.nh{background:linear-gradient(135deg,rgba(79,140,255,.2),rgba(62,207,142,.1));border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.nh[hidden]{display:none}
+.nh .w{color:var(--mu);font-size:12px}
+.nh b{display:block;font-size:17px;margin:2px 0}
+.nh .big{font-size:32px;font-weight:700;color:var(--bl);text-align:right}
+.nh .big small{font-size:12px;color:var(--mu);font-weight:400}
+.pn{margin-top:8px;color:var(--or)}
+.mg .pt{color:var(--or);font-weight:600}
+.mg .td{outline:1px solid var(--bl);border-radius:4px}
+@keyframes sl{from{opacity:0;transform:translateX(calc(var(--dir,0)*24px))}to{opacity:1;transform:none}}
+@keyframes cell{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px var(--bl),0 0 10px rgba(79,140,255,.35)}50%{box-shadow:0 0 0 2px var(--bl),0 0 22px rgba(79,140,255,.75)}}
+.anim{animation:sl .35s cubic-bezier(.2,.8,.2,1) both}
+.anim .d,.anim .mm{animation:cell .32s both;animation-delay:calc(var(--i,0)*12ms)}
+.d.pop{animation:pop .35s}
+.d.td{box-shadow:0 0 0 2px var(--bl);animation:pulse 2.6s infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="nav">
+  <button id="pv" aria-label="Anterior">‹</button>
+  <h1 id="tt"></h1>
+  <button id="nx" aria-label="Seguinte">›</button>
+</div>
+<div class="tb">
+  <button class="r" id="vw">Vista anual</button>
+</div>
+
+<div id="mv">
+  <div class="nh" id="nh" hidden></div>
+  <div class="stats">
+    <div class="st"><b id="s1">–</b><span>dias úteis no mês</span></div>
+    <div class="st"><b id="s2">–</b><span>feriados em dias úteis</span></div>
+    <div class="st"><b id="s3">0</b><span>dias de férias marcados</span></div>
+    <div class="st"><b id="s4" style="color:var(--bl)">–</b><span>dias a trabalhar</span></div>
+  </div>
+  <div class="grid" id="g"></div>
+  <div class="box"><h2 id="ht"></h2><div id="hl"></div></div>
+  <details class="box"><summary id="yt"></summary><div id="yl"></div></details>
+  <div class="leg">
+    <div><i style="background:var(--rd)"></i>Feriado (nacional + Lisboa)</div>
+    <div><i style="background:var(--gr)"></i>Férias (toca num dia útil para marcar)</div>
+    <div><i style="border:1px dashed var(--or);background:none"></i>Ponte (1 dia de férias dá folga seguida)</div>
+    <button class="r" id="rs" style="margin-top:8px">Limpar férias do mês</button>
+  </div>
+</div>
+
+<div id="yv" hidden>
+  <div class="stats">
+    <div class="st"><b id="y1">–</b><span>dias úteis no ano</span></div>
+    <div class="st"><b id="y2">–</b><span>feriados em dias úteis</span></div>
+    <div class="st"><b id="y3">0</b><span>dias de férias marcados</span></div>
+    <div class="st"><b id="y4" style="color:var(--bl)">–</b><span>dias a trabalhar</span></div>
+  </div>
+  <div class="ygrid" id="yg"></div>
+  <div class="leg">
+    <div><i style="background:var(--rd)"></i>Feriado (nacional + Lisboa)</div>
+    <div><i style="background:var(--gr)"></i>Férias</div>
+    <div><i style="border:1px dashed var(--or);background:none"></i>Ponte (1 dia de férias dá folga seguida)</div>
+    <div>Toca num mês para o abrir e marcar dias.</div>
+  </div>
+</div>
+
+<script>
+var MES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+var SEM=["seg","ter","qua","qui","sex","sáb","dom"];
+var KEY="cal_ferias_v2",V={};
+try{V=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){V={}}
+try{var old=JSON.parse(localStorage.getItem("dez2026_ferias")||"null");if(old){for(var k in old)V["2026-11-"+k]=1;localStorage.removeItem("dez2026_ferias");localStorage.setItem(KEY,JSON.stringify(V))}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(V))}catch(e){}}
+function easter(y){
+  var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+  h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+  mo=Math.floor((h+l-7*m+114)/31),dy=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,dy);
+}
+function addD(dt,n){return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()+n)}
+function feriados(y){
+  var p=easter(y),m={};
+  function s(dt,n){m[y+"-"+dt.getMonth()+"-"+dt.getDate()]=n}
+  s(new Date(y,0,1),"Ano Novo");s(addD(p,-2),"Sexta-feira Santa");s(p,"Páscoa");
+  s(new Date(y,3,25),"Dia da Liberdade");s(new Date(y,4,1),"Dia do Trabalhador");
+  s(addD(p,60),"Corpo de Deus");s(new Date(y,5,10),"Dia de Portugal");s(new Date(y,5,13),"Santo António (Lisboa)");
+  s(new Date(y,7,15),"Assunção de Nª Sra.");s(new Date(y,9,5),"Implantação da República");
+  s(new Date(y,10,1),"Todos os Santos");s(new Date(y,11,1),"Restauração da Independência");
+  s(new Date(y,11,8),"Imaculada Conceição");s(new Date(y,11,25),"Natal");
+  return m;
+}
+var Y=2026,M=11,VIEW="m",DIR=0,ANIM=0,POPKEY=null;
+var REDUCED=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+var FC={};
+function FH(y){return FC[y]||(FC[y]=feriados(y))}
+function keyOf(dt){return dt.getFullYear()+"-"+dt.getMonth()+"-"+dt.getDate()}
+function isHol(dt){return !!FH(dt.getFullYear())[keyOf(dt)]}
+function isOff(dt){return (dt.getDay()+6)%7>4||isHol(dt)||!!V[keyOf(dt)]}
+function isPonte(dt){var w=(dt.getDay()+6)%7;if(w>4||isHol(dt))return false;if(w===0)return isHol(addD(dt,1));if(w===4)return isHol(addD(dt,-1));return false}
+function streak(dt){var n=1,d=addD(dt,-1);while(isOff(d)){n++;d=addD(d,-1)}d=addD(dt,1);while(isOff(d)){n++;d=addD(d,1)}return n}
+function isToday(y,m,d){var t=new Date();return t.getFullYear()===y&&t.getMonth()===m&&t.getDate()===d}
+function setNum(id,v){var e=document.getElementById(id),from=parseInt(e.textContent)||0;if(from===v||REDUCED){e.textContent=v;return}var t0=performance.now();function st(t){var p=Math.min(1,(t-t0)/450);e.textContent=Math.round(from+(v-from)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(st)}requestAnimationFrame(st)}
+function renderNH(){
+  var T=new Date(),t0=new Date(T.getFullYear(),T.getMonth(),T.getDate()),best=null,e=document.getElementById("nh");
+  for(var yy=t0.getFullYear();yy<=t0.getFullYear()+1&&!best;yy++){
+    var F=FH(yy),ks=Object.keys(F).map(function(k){var p=k.split("-");return {dt:new Date(+p[0],+p[1],+p[2]),n:F[k]}}).filter(function(x){return x.dt>=t0&&(x.dt.getDay()+6)%7<5}).sort(function(a,b){return a.dt-b.dt});
+    if(ks.length)best=ks[0];
+  }
+  if(!best){e.hidden=true;return}
+  var n=Math.round((best.dt-t0)/864e5);
+  e.hidden=false;
+  e.innerHTML='<div><div class="w">Próximo feriado</div><b>'+best.n+'</b><div class="w">'+best.dt.getDate()+' de '+MES[best.dt.getMonth()].toLowerCase()+' ('+SEM[(best.dt.getDay()+6)%7]+')</div></div><div class="big">'+(n===0?'Hoje!':n+'<small> '+(n===1?'dia':'dias')+'</small>')+'</div>';
+}
+var g=document.getElementById("g");
+function wdOf(y,m,d){return (new Date(y,m,d).getDay()+6)%7}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+
+function renderMonth(){
+  var F=feriados(Y);
+  document.getElementById("tt").textContent=MES[M]+" "+Y;
+  g.innerHTML="";
+  SEM.forEach(function(n){g.appendChild(el("div","dh",n.charAt(0).toUpperCase()+n.slice(1)))});
+  var off=wdOf(Y,M,1),nd=new Date(Y,M+1,0).getDate();
+  for(var i=0;i<off;i++)g.appendChild(el("div","e"));
+  var uteis=0,fer=0,fr=0,lista=[],pontes=[];
+  for(var d=1;d<=nd;d++){
+    var wd=wdOf(Y,M,d),we=wd>4,key=Y+"-"+M+"-"+d,nome=F[key];
+    var b=el("button","d",d);
+    if(nome)lista.push({d:d,wd:wd,n:nome,we:we});
+    var pn=!we&&!nome&&isPonte(new Date(Y,M,d));
+    if(we){b.classList.add("we")}
+    else{uteis++;
+      if(nome){b.classList.add("fe");fer++}
+      else if(V[key]){b.classList.add("fr");fr++}
+      else if(pn){b.classList.add("pt")}
+    }
+    if(isToday(Y,M,d))b.classList.add("td");
+    if(key===POPKEY)b.classList.add("pop");
+    b.style.setProperty("--i",d);
+    if(nome)b.appendChild(el("small",null,nome));
+    else if(pn&&!V[key])b.appendChild(el("small",null,"ponte"));
+    if(pn)pontes.push({d:d,wd:wd,s:streak(new Date(Y,M,d)),on:!!V[key]});
+    if(!we&&!nome)(function(k){b.onclick=function(){if(V[k])delete V[k];else{V[k]=1;POPKEY=k}save();render()}})(key);
+    g.appendChild(b);
+  }
+  setNum("s1",uteis);setNum("s2",fer);setNum("s3",fr);setNum("s4",uteis-fer-fr);
+  document.getElementById("ht").textContent="FERIADOS DE "+MES[M].toUpperCase();
+  document.getElementById("hl").innerHTML=lista.length?lista.map(function(x){
+    return x.d+" ("+SEM[x.wd]+") – "+x.n+(x.we?' <span class="w">· calha ao fim de semana</span>':"")}).join("<br>"):'<span class="w">Nenhum este mês.</span>';
+  if(pontes.length)document.getElementById("hl").innerHTML+='<div class="pn">'+pontes.map(function(x){return 'Ponte: '+x.d+' ('+SEM[x.wd]+') – '+(x.on?'marcada, ':'1 dia de férias dá ')+x.s+' dias seguidos'+(x.on?' ✓':'')}).join('<br>')+'</div>';
+  var all=[];
+  for(var key2 in F){var p=key2.split("-"),m2=+p[1],d2=+p[2];all.push({m:m2,d:d2,wd:wdOf(Y,m2,d2),n:F[key2]})}
+  all.sort(function(a,b){return a.m-b.m||a.d-b.d});
+  document.getElementById("yt").textContent="Todos os feriados de "+Y;
+  document.getElementById("yl").innerHTML=all.map(function(x){
+    var t=x.d+" "+MES[x.m].slice(0,3).toLowerCase()+" ("+SEM[x.wd]+") – "+x.n;
+    return x.m===M?"<b>"+t+"</b>":(x.wd>4?'<span class="w">'+t+"</span>":t)}).join("<br>");
+}
+
+function renderYear(){
+  var F=feriados(Y),yg=document.getElementById("yg"),T=new Date(),u=0,f=0,v=0;
+  document.getElementById("tt").textContent=Y;
+  yg.innerHTML="";
+  for(var m=0;m<12;m++){
+    var card=el("div","mm"+(T.getFullYear()===Y&&T.getMonth()===m?" cur":""));
+    card.style.setProperty("--i",m);
+    card.appendChild(el("h3",null,MES[m]));
+    var mg=el("div","mg");
+    ["S","T","Q","Q","S","S","D"].forEach(function(l){mg.appendChild(el("div","h",l))});
+    var off=wdOf(Y,m,1),nd=new Date(Y,m+1,0).getDate();
+    for(var i=0;i<off;i++)mg.appendChild(el("div"));
+    for(var d=1;d<=nd;d++){
+      var wd=wdOf(Y,m,d),key=Y+"-"+m+"-"+d,c=el("div",null,d);
+      if(wd>4)c.className="we";
+      else{u++;
+        if(F[key]){c.className="fe";f++}
+        else if(V[key]){c.className="fr";v++}
+        else if(isPonte(new Date(Y,m,d)))c.className="pt";
+      }
+      if(isToday(Y,m,d))c.className+=" td";
+      mg.appendChild(c);
+    }
+    card.appendChild(mg);
+    (function(mm){card.onclick=function(){M=mm;VIEW="m";DIR=0;ANIM=1;render()}})(m);
+    yg.appendChild(card);
+  }
+  setNum("y1",u);setNum("y2",f);setNum("y3",v);setNum("y4",u-f-v);
+}
+
+function render(){
+  var yr=VIEW==="y";
+  document.getElementById("mv").hidden=yr;
+  document.getElementById("yv").hidden=!yr;
+  document.getElementById("vw").textContent=yr?"Vista mensal":"Vista anual";
+  document.getElementById("vw").classList.toggle("on",yr);
+  if(yr)renderYear();else{renderMonth();renderNH()}
+  if(ANIM&&!REDUCED){var c=document.getElementById(yr?"yv":"mv");c.style.setProperty("--dir",DIR);c.classList.remove("anim");void c.offsetWidth;c.classList.add("anim");setTimeout(function(){c.classList.remove("anim")},900)}
+  ANIM=0;POPKEY=null;
+}
+function go(n){
+  DIR=n>0?1:-1;ANIM=1;
+  if(VIEW==="y"){Y+=n}
+  else{M+=n;if(M<0){M=11;Y--}if(M>11){M=0;Y++}}
+  render();
+}
+document.getElementById("pv").onclick=function(){go(-1)};
+document.getElementById("nx").onclick=function(){go(1)};
+document.getElementById("vw").onclick=function(){VIEW=VIEW==="y"?"m":"y";DIR=0;ANIM=1;render()};
+document.addEventListener("keydown",function(e){if(e.key==="ArrowLeft")go(-1);if(e.key==="ArrowRight")go(1)});
+var sx=0,sy=0;
+document.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchend",function(e){var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.6)go(dx<0?1:-1)},{passive:true});
+document.getElementById("rs").onclick=function(){var pre=Y+"-"+M+"-";for(var k in V)if(k.indexOf(pre)===0)delete V[k];save();render()};
+render();
+</script>
+</body>
+</html>
